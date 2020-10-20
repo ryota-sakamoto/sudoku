@@ -15,9 +15,9 @@ import (
 type Panel map[int]int
 
 // Table is sudoku's table
-// panel11 panel12 panel13
-// panel21 panel22 panel23
-// panel31 panel32 panel33
+// panels[0][0] panels[0][1] panels[0][2]
+// panels[1][0] panels[1][1] panels[1][2]
+// panels[2][0] panels[2][1] panels[1][2]
 type Table struct {
 	panels [][]Panel
 }
@@ -68,6 +68,14 @@ func Parse(s string) (*Table, error) {
 	return &Table{
 		panels: panels,
 	}, nil
+}
+
+func (t *Table) Solve() error {
+	return nil
+}
+
+func (t *Table) dfs() {
+
 }
 
 func (t *Table) Render() string {
