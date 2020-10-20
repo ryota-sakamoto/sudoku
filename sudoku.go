@@ -8,18 +8,9 @@ import (
 	"github.com/jedib0t/go-pretty/table"
 )
 
-// Panel is 9x9 squares
-// 1 2 3
-// 4 5 6
-// 7 8 9
-type Panel map[int]int
-
 // Table is sudoku's table
-// panels[0][0] panels[0][1] panels[0][2]
-// panels[1][0] panels[1][1] panels[1][2]
-// panels[2][0] panels[2][1] panels[1][2]
 type Table struct {
-	panels [][]Panel
+	_panels [9][9][]int
 }
 
 func Parse(s string) (*Table, error) {
@@ -28,7 +19,7 @@ func Parse(s string) (*Table, error) {
 		return nil, fmt.Errorf("invalid rows count: want 9, but %d", len(rows))
 	}
 
-	panels := [][]Panel{
+	panels := [][]map[int]int{
 		{
 			{},
 			{},
@@ -62,11 +53,23 @@ func Parse(s string) (*Table, error) {
 				panels[i/3][j/3][i%3*3+j%3] = int(p) - 48
 			}
 		}
+	}
 
+	var _panels [9][9][]int
+	for i := range panels {
+		for j := range panels[i] {
+			for k, v := range panels[i][j] {
+				if v != 0 {
+					_panels[i*3+j][k] = append(_panels[i*3+j][k], v)
+				} else {
+					// _panels[i*3+j][k] = append(_panels[i*3+j][k])
+				}
+			}
+		}
 	}
 
 	return &Table{
-		panels: panels,
+		_panels: _panels,
 	}, nil
 }
 
@@ -81,26 +84,28 @@ func (t *Table) dfs() {
 func (t *Table) Render() string {
 	writer := table.NewWriter()
 
-	for _, v := range t.panels {
-		r := table.Row{}
+	r := table.Row{}
+	for _, v := range t._panels {
+		s := ""
 		for _, p := range v {
-			s := ""
-			for i := 0; i < 9; i++ {
-				if p[i] == 0 {
-					s += "_"
-				} else {
-					s += strconv.Itoa(p[i])
-				}
-
-				if len(s) == 3 || len(s) == 7 {
-					s += "\n"
-				}
+			if len(p) == 1 {
+				s += strconv.Itoa(p[0])
+			} else {
+				s += "_"
 			}
-			r = append(r, s)
+
+			if len(s) == 3 || len(s) == 7 {
+				s += "\n"
+			}
+
+			if len(s) == 11 {
+				r = append(r, s)
+			}
 		}
 
 		if len(r) == 3 {
 			writer.AppendRow(r)
+			r = table.Row{}
 		}
 	}
 
