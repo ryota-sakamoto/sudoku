@@ -58,11 +58,110 @@ func Parse(s string) (*Table, error) {
 	var _panels [9][9][]int
 	for i := range panels {
 		for j := range panels[i] {
+			p := []int{}
 			for k, v := range panels[i][j] {
 				if v != 0 {
 					_panels[i*3+j][k] = append(_panels[i*3+j][k], v)
-				} else {
-					// _panels[i*3+j][k] = append(_panels[i*3+j][k])
+					p = append(p, v)
+				}
+			}
+
+			ac := []int{}
+			for c := 1; c <= 9; c++ {
+				f := true
+				for _, _p := range p {
+					if _p == c {
+						f = false
+						break
+					}
+				}
+
+				if f {
+					ac = append(ac, c)
+				}
+			}
+
+			for k, v := range panels[i][j] {
+				if v == 0 {
+					_panels[i*3+j][k] = make([]int, len(ac))
+					copy(_panels[i*3+j][k], ac)
+				}
+			}
+		}
+	}
+
+	lrtable := map[int]map[rune][]int{
+		0: {
+			'r': []int{1, 2},
+			'l': []int{3, 6},
+		},
+		1: {
+			'r': []int{0, 2},
+			'l': []int{4, 7},
+		},
+		2: {
+			'r': []int{0, 1},
+			'l': []int{5, 8},
+		},
+		3: {
+			'r': []int{4, 5},
+			'l': []int{0, 6},
+		},
+		4: {
+			'r': []int{3, 5},
+			'l': []int{1, 7},
+		},
+		5: {
+			'r': []int{3, 4},
+			'l': []int{2, 8},
+		},
+		6: {
+			'r': []int{7, 8},
+			'l': []int{0, 3},
+		},
+		7: {
+			'r': []int{6, 8},
+			'l': []int{1, 4},
+		},
+		8: {
+			'r': []int{6, 7},
+			'l': []int{2, 5},
+		},
+	}
+
+	for i := range _panels {
+		for j := range _panels[i] {
+			if len(_panels[i][j]) == 1 {
+				continue
+			}
+
+			for _, p := range lrtable[i]['r'] {
+				for k := 0; k < 3; k++ {
+					t := _panels[p][j/3*3+k]
+					if len(t) == 1 {
+						p := []int{}
+						for _, c := range _panels[i][j] {
+							if t[0] != c {
+								p = append(p, c)
+							}
+						}
+						_panels[i][j] = p
+					}
+				}
+			}
+
+			for _, p := range lrtable[i]['l'] {
+				for k := 0; k < 3; k++ {
+					t := _panels[p][j%3+3*k]
+					if len(t) == 1 {
+						p := []int{}
+						for _, c := range _panels[i][j] {
+							if t[0] != c {
+								p = append(p, c)
+							}
+						}
+						_panels[i][j] = p
+					}
 				}
 			}
 		}
