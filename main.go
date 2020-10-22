@@ -20,6 +20,8 @@ func main() {
 		panic(err)
 	}
 
+	fmt.Println(t.Render())
+
 	if err := t.Solve(); err != nil {
 		panic(err)
 	}
