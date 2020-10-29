@@ -1,4 +1,4 @@
-package main
+package sudoku
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 
 // Table is sudoku's table
 type Table struct {
-	panels [9][9]map[int]struct{}
+	Panels [9][9]map[int]struct{}
 }
 
 func Parse(s string) (*Table, error) {
@@ -91,7 +91,7 @@ func Parse(s string) (*Table, error) {
 	}
 
 	return &Table{
-		panels: panels,
+		Panels: panels,
 	}, nil
 }
 
@@ -101,34 +101,111 @@ func (t *Table) Solve() error {
 
 // TODO: improvement
 func (t *Table) dfs(i, j int) error {
-	// if i == 9 && j == 0 {
-	// 	return t.Check()
-	// }
+	if i == 9 && j == 0 {
+		return t.Check()
+	}
 
-	// raw := make([]int, len(t._panels[i][j]))
-	// copy(raw, t._panels[i][j])
+	t.Debug()
 
-	// for _, can := range raw {
-	// 	t._panels[i][j] = []int{can}
+	raw := map[int]struct{}{}
+	for key := range t.Panels[i][j] {
+		raw[key] = struct{}{}
+	}
 
-	// 	nexti := i
-	// 	nextj := j
+	if len(raw) == 0 {
+		return fmt.Errorf("candidate count is zero")
+	}
 
-	// 	if j == 8 {
-	// 		nexti++
-	// 		nextj = 0
-	// 	} else {
-	// 		nextj++
-	// 	}
+	for key := range raw {
+		t.Panels[i][j] = map[int]struct{}{
+			key: {},
+		}
 
-	// 	if err := t.dfs(nexti, nextj); err == nil {
-	// 		return nil
-	// 	}
-	// }
+		nexti := i
+		nextj := j
 
-	// t._panels[i][j] = raw
+		if j == 8 {
+			nexti++
+			nextj = 0
+		} else {
+			nextj++
+		}
 
-	return nil
+		before := t.Removal(i, j, key)
+		fmt.Println("input:", i, j, key)
+		fmt.Println("before:", before)
+		fmt.Println()
+
+		if err := t.dfs(nexti, nextj); err == nil {
+			return nil
+		}
+
+		for _, v := range before {
+			t.Panels[v.x][v.y][key] = struct{}{}
+		}
+	}
+
+	return fmt.Errorf("no")
+}
+
+type XY struct {
+	x int
+	y int
+}
+
+func (t *Table) Removal(i, j, num int) []XY {
+	result := []XY{}
+
+	for k := 0; k < 9; k++ {
+		if j == k {
+			continue
+		}
+
+		if _, ok := t.Panels[i][k][num]; ok {
+			result = append(result, XY{
+				x: i,
+				y: k,
+			})
+
+			delete(t.Panels[i][k], num)
+		}
+	}
+
+	for k := 0; k < 9; k++ {
+		if i == k {
+			continue
+		}
+
+		if _, ok := t.Panels[k][j][num]; ok {
+			result = append(result, XY{
+				x: k,
+				y: j,
+			})
+
+			delete(t.Panels[k][j], num)
+		}
+	}
+
+	_i := i / 3 * 3
+	_j := j / 3 * 3
+	for x := 0; x < 3; x++ {
+		for y := 0; y < 3; y++ {
+			if _i+x == i && _j+y == j {
+				continue
+			}
+
+			if _, ok := t.Panels[_i+x][_j+y][num]; ok {
+				result = append(result, XY{
+					x: _i + x,
+					y: _j + y,
+				})
+
+				delete(t.Panels[_i+x][_j+y], num)
+			}
+		}
+	}
+
+	return result
 }
 
 func (t *Table) Check() error {
@@ -139,11 +216,11 @@ func (t *Table) Render() string {
 	writer := table.NewWriter()
 
 	l := []string{}
-	for i := range t.panels {
+	for i := range t.Panels {
 		s := ""
-		for j := range t.panels[i] {
-			if len(t.panels[i][j]) == 1 {
-				for key := range t.panels[i][j] {
+		for j := range t.Panels[i] {
+			if len(t.Panels[i][j]) == 1 {
+				for key := range t.Panels[i][j] {
 					s += strconv.Itoa(key)
 				}
 			} else {
@@ -169,4 +246,20 @@ func (t *Table) Render() string {
 	writer.Style().Options.SeparateRows = true
 
 	return writer.Render()
+}
+
+func (t *Table) Debug() {
+	s := ""
+	for i := range t.Panels {
+		for j := range t.Panels[i] {
+			if len(t.Panels[i][j]) == 1 {
+				for key := range t.Panels[i][j] {
+					s += strconv.Itoa(key)
+				}
+			} else {
+				s += "_"
+			}
+		}
+	}
+	fmt.Println(s)
 }
